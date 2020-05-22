@@ -3,6 +3,7 @@
 
 # IntellijIdea files
 *.iml
+mflix/mflix.iml
 .idea
 out
 /target/
