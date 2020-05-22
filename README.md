@@ -18,11 +18,13 @@ mvn -Dtest=<Test Class> test
 ```
 Run _all Java files that end with Test.java_ (from all subdirectories)
 ```java 
-mvn '-Dtest="**/*Test.java"' test
+cd mflix
+mvn -Dtest="**/*Test.java" test
 ```
 Run _whole test package_
 ```java
-mvn '-Dtest="src.test.java.**"' test
+cd mflix
+mvn -Dtest="src.test.java.**" test
 ```
 ## Chapters
 
