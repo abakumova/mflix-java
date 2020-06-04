@@ -20,47 +20,39 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class ProjectionTest extends TicketTest {
 
-  private MovieDao dao;
-  @Autowired MongoClient mongoClient;
+    private MovieDao dao;
+    @Autowired
+    MongoClient mongoClient;
 
-  @Value("${spring.mongodb.database}")
-  String databaseName;
+    @Value("${spring.mongodb.database}")
+    String databaseName;
 
-  @Before
-  public void setup() {
-    this.dao = new MovieDao(mongoClient, databaseName);
-  }
-
-  @Test
-  public void testFindMoviesByCountry() {
-    int expectedSize = 2;
-    String country = "Kosovo";
-    Iterable<Document> cursor = dao.getMoviesByCountry(country);
-    int actualSize = 0;
-    for (Document d : cursor) {
-      System.out.println(d);
-      actualSize++;
+    @Before
+    public void setup() {
+        this.dao = new MovieDao(mongoClient, databaseName);
     }
 
-    Assert.assertEquals(
-        "Unexpected number of returned movie documents. Check your query filter",
-        expectedSize,
-        actualSize);
-  }
+    @Test
+    public void testFindMoviesByCountry() {
+        int expectedSize = 2;
+        String country = "Kosovo";
+        Iterable<Document> cursor = dao.getMoviesByCountry(country);
+        int actualSize = 0;
+        for (Document d : cursor) {
+            System.out.println(d);
+            actualSize++;
+        }
 
-  @Test
-  public void testProjectionShape() {
-    Iterable<Document> cursor = dao.getMoviesByCountry("Russia", "Japan");
-    for (Document doc : cursor) {
-      Assert.assertEquals(
-          "Document should have only two fields. Check your projection", 2, doc.keySet().size());
-
-      Assert.assertTrue(
-          "Should return `_id` field. Check your projection",
-           doc.keySet().contains("_id"));
-      Assert.assertTrue(
-          "Should return `title` field. Check your projection",
-           doc.keySet().contains("title"));
+        Assert.assertEquals("Unexpected number of returned movie documents. Check your query filter", expectedSize, actualSize);
     }
-  }
+
+    @Test
+    public void testProjectionShape() {
+        Iterable<Document> cursor = dao.getMoviesByCountry("Russia", "Japan");
+        for (Document doc : cursor) {
+            Assert.assertEquals("Document should have only two fields. Check your projection", 2, doc.keySet().size());
+            Assert.assertTrue("Should return `_id` field. Check your projection", doc.keySet().contains("_id"));
+            Assert.assertTrue("Should return `title` field. Check your projection", doc.keySet().contains("title"));
+        }
+    }
 }
