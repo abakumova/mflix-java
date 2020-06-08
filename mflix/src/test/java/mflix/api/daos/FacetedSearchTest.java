@@ -37,9 +37,7 @@ public class FacetedSearchTest extends TicketTest {
 
   @Test
   public void testRatingRuntimeBuckets() {
-
     String cast = "Salma Hayek";
-
     List<Document> moviesInfo = dao.getMoviesCastFaceted(20, 0, cast);
 
     ArrayList<Document> allMovies = (ArrayList<Document>) moviesInfo.get(0).get("movies");
@@ -63,9 +61,7 @@ public class FacetedSearchTest extends TicketTest {
 
   @Test
   public void testFacetedSearchPaging() {
-
     String cast = "Tom Hanks";
-
     List<Document> moviesInfo = dao.getMoviesCastFaceted(20, 2 * 20, cast);
 
     assertEquals("Should return a list of one faceted document", 1, moviesInfo.size());
@@ -91,9 +87,7 @@ public class FacetedSearchTest extends TicketTest {
 
   @Test
   public void testFacetedMultipleCast() {
-
     String[] cast = {"Brad Pitt", "Meryl Streep"};
-
     List<Document> moviesInfo = dao.getMoviesCastFaceted(20, 4 * 20, cast);
 
     assertEquals("Should return a list of one faceted document", 1, moviesInfo.size());
