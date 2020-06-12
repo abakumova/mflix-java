@@ -38,7 +38,6 @@ public class UserTest extends TicketTest {
 
   @Before
   public void setup() {
-
     this.dao = new UserDao(mongoClient, databaseName);
     this.testUser = new User();
     this.testUser.setName("Hermione Granger");
@@ -56,13 +55,11 @@ public class UserTest extends TicketTest {
     MongoDatabase db = mongoClient.getDatabase("mflix");
     db.getCollection("users").deleteMany(new Document("email", email));
     db.getCollection("users").deleteMany(new Document("email", "log@out.com"));
-    db.getCollection("sessions").deleteMany(new Document("user_id", "log@out" +
-            ".com"));
+    db.getCollection("sessions").deleteMany(new Document("user_id", "log@out.com"));
   }
 
   @Test
   public void testRegisterUser() {
-
     assertTrue(
         "Should have correctly created the user - check your write user method",
         dao.addUser(testUser)); // add string explanation
