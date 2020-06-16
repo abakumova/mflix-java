@@ -5,6 +5,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import mflix.api.models.Session;
 import mflix.api.models.User;
 import org.bson.Document;
@@ -62,23 +63,25 @@ public class UserDao extends AbstractMFlixDao {
 
   }
 
-  /**
-   * Creates session using userId and jwt token.
-   *
-   * @param userId - user string identifier
-   * @param jwt - jwt string token
-   * @return true if successful
-   */
-  public boolean createUserSession(String userId, String jwt) {
-    //Ticket: User Management - implement the method that allows session information to be stored in it's designated collection.
-    Session session = new Session();
-    session.setUserId(userId);
-    session.setJwt(jwt);
-    sessionsCollection.insertOne(session);
-    return true;
-    //TODO > Ticket: Handling Errors - implement a safeguard against
-    // creating a session with the same jwt token.
-  }
+    /**
+     * Creates session using userId and jwt token.
+     *
+     * @param userId - user string identifier
+     * @param jwt    - jwt string token
+     * @return true if successful
+     */
+    public boolean createUserSession(String userId, String jwt) {
+        //Ticket: User Management - implement the method that allows session information to be stored in it's designated collection.
+        if (getUserSession(userId) == null) {
+            Session session = new Session();
+            session.setUserId(userId);
+            session.setJwt(jwt);
+            sessionsCollection.insertOne(session);
+        }
+        return true;
+        //TODO > Ticket: Handling Errors - implement a safeguard against
+        // creating a session with the same jwt token.
+    }
 
   /**
    * Returns the User object matching the an email string value.
@@ -129,18 +132,20 @@ public class UserDao extends AbstractMFlixDao {
     return true;
   }
 
-  /**
-   * Updates the preferences of an user identified by `email` parameter.
-   *
-   * @param email - user to be updated email
-   * @param userPreferences - set of preferences that should be stored and replace the existing
-   *     ones. Cannot be set to null value
-   * @return User object that just been updated.
-   */
-  public boolean updateUserPreferences(String email, Map<String, ?> userPreferences) {
-    //TODO> Ticket: User Preferences - implement the method that allows for user preferences to be updated.
-    //TODO > Ticket: Handling Errors - make this method more robust by
-    // handling potential exceptions when updating an entry.
-    return false;
-  }
+    /**
+     * Updates the preferences of an user identified by `email` parameter.
+     *
+     * @param email           - user to be updated email
+     * @param userPreferences - set of preferences that should be stored and replace the existing
+     *                        ones. Cannot be set to null value
+     * @return User object that just been updated.
+     */
+    public boolean updateUserPreferences(String email, Map<String, ?> userPreferences) {
+        //Ticket: User Preferences - implement the method that allows for user preferences to be updated.
+        Bson emailFilter = Filters.in("email", email);
+        usersCollection.updateOne(emailFilter, Updates.set("preferences", new Document((Map<String, Object>) userPreferences)));
+        //TODO > Ticket: Handling Errors - make this method more robust by
+        // handling potential exceptions when updating an entry.
+        return true;
+    }
 }

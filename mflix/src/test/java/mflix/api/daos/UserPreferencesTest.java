@@ -34,7 +34,6 @@ public class UserPreferencesTest extends TicketTest {
 
   @Before
   public void setup() {
-
     this.dao = new UserDao(mongoClient, databaseName);
     this.email = "user@preferences.email";
     Document userDoc = new Document("email", email);
@@ -50,7 +49,6 @@ public class UserPreferencesTest extends TicketTest {
 
   @Test
   public void testUpdateSinglePreferences() {
-
     String expected = "FC Porto";
     String key = "favorite_club";
     HashMap<String, String> userPrefs = new HashMap<>();
