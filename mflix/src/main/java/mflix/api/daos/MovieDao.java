@@ -45,6 +45,7 @@ public class MovieDao extends AbstractMFlixDao {
         // match stage to find movie
         Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
         pipeline.add(match);
+        //Ticket: Get Comments - implement the lookup stage that allows the comments to retrieved with Movies.
         pipeline.addAll(Arrays.asList(new Document("$lookup", new Document("from", "comments")
                 .append("let", new Document("id", "$_id"))
                 .append("pipeline", Arrays.asList(
