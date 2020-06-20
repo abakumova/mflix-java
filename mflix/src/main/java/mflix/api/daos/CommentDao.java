@@ -1,15 +1,9 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoWriteException;
-import com.mongodb.ReadConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import mflix.api.models.Comment;
 import mflix.api.models.Critic;
@@ -24,11 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
+import static com.mongodb.client.model.Updates.set;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
@@ -79,12 +73,11 @@ public class CommentDao extends AbstractMFlixDao {
    * returns the resulting Comment object.
    */
   public Comment addComment(Comment comment) {
-
-    // TODO> Ticket - Update User reviews: implement the functionality that enables adding a new
-    // comment.
+    //Ticket - Update User reviews: implement the functionality that enables adding a new comment.
+    commentCollection.insertOne(comment);
     // TODO> Ticket - Handling Errors: Implement a try catch block to
     // handle a potential write exception when given a wrong commentId.
-    return null;
+    return comment;
   }
 
   /**
@@ -101,12 +94,16 @@ public class CommentDao extends AbstractMFlixDao {
    * @return true if successfully updates the comment text.
    */
   public boolean updateComment(String commentId, String text, String email) {
-
-    // TODO> Ticket - Update User reviews: implement the functionality that enables updating an
-    // user own comments
+    //Ticket - Update User reviews: implement the functionality that enables updating an user own comments
+    Bson commentFilter = Filters.and(Filters.eq("_id", new ObjectId(commentId)), Filters.eq("email",email));
+    Optional<Comment> comment = Optional.ofNullable(commentCollection.find(commentFilter).first());
+    if (comment.isPresent()) {
+      UpdateResult updateResult = commentCollection.updateOne(commentFilter, set("text", text));
+      return updateResult.wasAcknowledged();
+    }
+    return false;
     // TODO> Ticket - Handling Errors: Implement a try catch block to
     // handle a potential write exception when given a wrong commentId.
-    return false;
   }
 
   /**
