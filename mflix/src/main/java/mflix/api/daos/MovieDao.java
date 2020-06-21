@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -45,12 +46,12 @@ public class MovieDao extends AbstractMFlixDao {
         Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
         pipeline.add(match);
         //Ticket: Get Comments - implement the lookup stage that allows the comments to retrieved with Movies.
-        Bson lookup = new Document("$lookup",
-                new Document("from", "comments")
-                        .append("localField", "_id")
-                        .append("foreignField", "movie_id")
-                        .append("as", "comments"));
-        pipeline.add(lookup);
+        pipeline.addAll(Arrays.asList(new Document("$lookup", new Document("from", "comments")
+                .append("let", new Document("id", "$_id"))
+                .append("pipeline", Arrays.asList(
+                        new Document("$match", new Document("$expr", new Document("$eq", Arrays.asList("$movie_id", "$$id")))),
+                        new Document("$sort", new Document("date", -1))))
+                .append("as", "comments"))));
         Document movie = moviesCollection.aggregate(pipeline).first();
 
         return movie;
