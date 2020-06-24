@@ -1,6 +1,7 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ReadConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
@@ -19,9 +20,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static com.mongodb.client.model.Accumulators.sum;
+import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.limit;
+import static com.mongodb.client.model.Aggregates.sort;
+import static com.mongodb.client.model.Sorts.descending;
 import static com.mongodb.client.model.Updates.set;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -127,21 +134,31 @@ public class CommentDao extends AbstractMFlixDao {
     return false;
   }
 
-  /**
-   * Ticket: User Report - produce a list of users that comment the most in the website. Query the
-   * `comments` collection and group the users by number of comments. The list is limited to up most
-   * 20 commenter.
-   *
-   * @return List {@link Critic} objects.
-   */
-  public List<Critic> mostActiveCommenters() {
-    List<Critic> mostActive = new ArrayList<>();
-    // // TODO> Ticket: User Report - execute a command that returns the
-    // // list of 20 users, group by number of comments. Don't forget,
-    // // this report is expected to be produced with an high durability
-    // // guarantee for the returned documents. Once a commenter is in the
-    // // top 20 of users, they become a Critic, so mostActive is composed of
-    // // Critic objects.
-    return mostActive;
-  }
+    /**
+     * Ticket: User Report - produce a list of users that comment the most in the website. Query the
+     * `comments` collection and group the users by number of comments. The list is limited to up most
+     * 20 commenter.
+     *
+     * @return List {@link Critic} objects.
+     */
+    public List<Critic> mostActiveCommenters() {
+        //Ticket: User Report - execute a command that returns the list of 20 users, group by number of comments. Don't forget,
+        // this report is expected to be produced with an high durability guarantee for the returned documents.
+        // Once a commenter is in the top 20 of users, they become a Critic, so mostActive is composed of Critic objects.
+        List<Critic> mostActive = new ArrayList<>();
+        List<Bson> pipeline = new ArrayList<>();
+
+        MongoCollection<Critic> criticCollection = db.getCollection(COMMENT_COLLECTION, Critic.class)
+                .withCodecRegistry(pojoCodecRegistry)
+                .withReadConcern(ReadConcern.MAJORITY);
+
+        pipeline.addAll(Arrays.asList(
+                group("$email", sum("count", 1L)),
+                sort(descending("count")),
+                limit(20)));
+
+        criticCollection.aggregate(pipeline).into(mostActive);
+
+        return mostActive;
+    }
 }
