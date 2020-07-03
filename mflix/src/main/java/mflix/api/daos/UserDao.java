@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -55,12 +56,16 @@ public class UserDao extends AbstractMFlixDao {
    */
   public boolean addUser(User user) {
     //Ticket: Durable Writes -  you might want to use a more durable write concern here!
+    //Ticket: Handling Errors - make sure to only add new users and not users that already exist.
     usersCollection.withWriteConcern(WriteConcern.W2);
-    usersCollection.insertOne(user);
-    return true;
-    //TODO > Ticket: Handling Errors - make sure to only add new users
-    // and not users that already exist.
+    Optional optional = Optional.ofNullable(getUser(user.getEmail()));
+    if(!optional.isPresent()){
+      usersCollection.insertOne(user);
+    } else {
+      throw new IncorrectDaoOperation("this user is already added", new Throwable());
+    }
 
+    return true;
   }
 
     /**
@@ -72,15 +77,18 @@ public class UserDao extends AbstractMFlixDao {
      */
     public boolean createUserSession(String userId, String jwt) {
         //Ticket: User Management - implement the method that allows session information to be stored in it's designated collection.
-        if (getUserSession(userId) == null) {
-            Session session = new Session();
-            session.setUserId(userId);
-            session.setJwt(jwt);
-            sessionsCollection.insertOne(session);
+        //Ticket: Handling Errors - implement a safeguard against creating a session with the same jwt token.
+        Session session = new Session();
+        session.setUserId(userId);
+        session.setJwt(jwt);
+
+        Optional optional = Optional.ofNullable(getUserSession(userId));
+        if (optional.isPresent()) {
+            deleteUserSessions(userId);
         }
+
+        sessionsCollection.insertOne(session);
         return true;
-        //TODO > Ticket: Handling Errors - implement a safeguard against
-        // creating a session with the same jwt token.
     }
 
   /**
@@ -91,9 +99,8 @@ public class UserDao extends AbstractMFlixDao {
    */
   public User getUser(String email) {
     Bson emailFilter = Filters.in("email", email);
-    User user = null;
     //Ticket: User Management - implement the query that returns the first User object.
-    user = usersCollection.find(emailFilter).first();
+    User user = usersCollection.find(emailFilter).first();
     return user;
   }
 
@@ -126,10 +133,15 @@ public class UserDao extends AbstractMFlixDao {
     // remove user sessions
     deleteUserSessions(email);
     //Ticket: User Management - implement the delete user method
+    //Ticket: Handling Errors - make this method more robust by handling potential exceptions.
     Bson emailFilter = Filters.in("email", email);
-    usersCollection.findOneAndDelete(emailFilter);
-    //TODO > Ticket: Handling Errors - make this method more robust by handling potential exceptions.
-    return true;
+    Optional optional = Optional.ofNullable(getUser(email));
+    if(optional.isPresent()) {
+      usersCollection.findOneAndDelete(emailFilter);
+      return true;
+    } else {
+      return false;
+    }
   }
 
     /**
@@ -142,10 +154,14 @@ public class UserDao extends AbstractMFlixDao {
      */
     public boolean updateUserPreferences(String email, Map<String, ?> userPreferences) {
         //Ticket: User Preferences - implement the method that allows for user preferences to be updated.
+        //Ticket: Handling Errors - make this method more robust by handling potential exceptions when updating an entry.
         Bson emailFilter = Filters.in("email", email);
-        usersCollection.updateOne(emailFilter, Updates.set("preferences", new Document((Map<String, Object>) userPreferences)));
-        //TODO > Ticket: Handling Errors - make this method more robust by
-        // handling potential exceptions when updating an entry.
-        return true;
+        Optional optional = Optional.ofNullable(getUser(email));
+        if(optional.isPresent() && userPreferences != null) {
+          usersCollection.updateOne(emailFilter, Updates.set("preferences", new Document((Map<String, Object>) userPreferences)));
+          return true;
+        } else {
+          return false;
+        }
     }
 }

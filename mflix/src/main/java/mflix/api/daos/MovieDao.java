@@ -39,22 +39,22 @@ public class MovieDao extends AbstractMFlixDao {
     public Document getMovie(String movieId) {
         if (!validIdValue(movieId)) {
             return null;
+        } else {
+            List<Bson> pipeline = new ArrayList<>();
+            // match stage to find movie
+            Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
+            pipeline.add(match);
+            //Ticket: Get Comments - implement the lookup stage that allows the comments to retrieved with Movies.
+            pipeline.addAll(Arrays.asList(new Document("$lookup", new Document("from", "comments")
+                    .append("let", new Document("id", "$_id"))
+                    .append("pipeline", Arrays.asList(
+                            new Document("$match", new Document("$expr", new Document("$eq", Arrays.asList("$movie_id", "$$id")))),
+                            new Document("$sort", new Document("date", -1))))
+                    .append("as", "comments"))));
+            Document movie = moviesCollection.aggregate(pipeline).first();
+
+            return movie;
         }
-
-        List<Bson> pipeline = new ArrayList<>();
-        // match stage to find movie
-        Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
-        pipeline.add(match);
-        //Ticket: Get Comments - implement the lookup stage that allows the comments to retrieved with Movies.
-        pipeline.addAll(Arrays.asList(new Document("$lookup", new Document("from", "comments")
-                .append("let", new Document("id", "$_id"))
-                .append("pipeline", Arrays.asList(
-                        new Document("$match", new Document("$expr", new Document("$eq", Arrays.asList("$movie_id", "$$id")))),
-                        new Document("$sort", new Document("date", -1))))
-                .append("as", "comments"))));
-        Document movie = moviesCollection.aggregate(pipeline).first();
-
-        return movie;
     }
 
     /**
@@ -103,7 +103,7 @@ public class MovieDao extends AbstractMFlixDao {
      */
     public List<Document> getMoviesByCountry(String... country) {
         Bson queryFilter = Filters.in("countries", country);
-        Bson projection = Projections.metaTextScore("title");
+        Bson projection = new Document("title", 1);
         //Ticket: Projection - implement the query and projection required by the unit test
         List<Document> movies = new ArrayList<>();
         moviesCollection.find(queryFilter).projection(projection).into(movies);
@@ -264,9 +264,17 @@ public class MovieDao extends AbstractMFlixDao {
      * @return true if valid movieId.
      */
     private boolean validIdValue(String movieId) {
-        //TODO> Ticket: Handling Errors - implement a way to catch a
-        //any potential exceptions thrown while validating a movie id.
+        //Ticket: Handling Errors - implement a way to catch a any potential exceptions thrown while validating a movie id.
         //Check out this method's use in the method that follows.
+        try {
+            if (!movieId.matches("^[A-Fa-f0-9]+$")){
+                throw new NullPointerException("Does not match");
+            }
+            Bson movie = Filters.eq("_id", new ObjectId(movieId));
+            moviesCollection.find(movie).first();
+        } catch (NullPointerException ex) {
+            return false;
+        }
         return true;
     }
 

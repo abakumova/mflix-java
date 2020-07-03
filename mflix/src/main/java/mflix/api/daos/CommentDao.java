@@ -81,9 +81,13 @@ public class CommentDao extends AbstractMFlixDao {
    */
   public Comment addComment(Comment comment) {
     //Ticket - Update User reviews: implement the functionality that enables adding a new comment.
-    commentCollection.insertOne(comment);
-    // TODO> Ticket - Handling Errors: Implement a try catch block to
-    // handle a potential write exception when given a wrong commentId.
+    //Ticket - Handling Errors: Implement a try catch block to handle a potential write exception when given a wrong commentId.
+    Optional<String> commentOptional = Optional.ofNullable(comment.getId());
+    if (!commentOptional.isPresent()) {
+      throw new IncorrectDaoOperation("commentId is null", new Throwable());
+    } else {
+      commentCollection.insertOne(comment);
+    }
     return comment;
   }
 
@@ -102,6 +106,7 @@ public class CommentDao extends AbstractMFlixDao {
    */
   public boolean updateComment(String commentId, String text, String email) {
     //Ticket - Update User reviews: implement the functionality that enables updating an user own comments
+    //Ticket - Handling Errors: Implement a try catch block to handle a potential write exception when given a wrong commentId.
     Bson commentFilter = Filters.and(Filters.eq("_id", new ObjectId(commentId)), Filters.eq("email",email));
     Optional<Comment> comment = Optional.ofNullable(commentCollection.find(commentFilter).first());
     if (comment.isPresent()) {
@@ -109,8 +114,6 @@ public class CommentDao extends AbstractMFlixDao {
       return updateResult.wasAcknowledged();
     }
     return false;
-    // TODO> Ticket - Handling Errors: Implement a try catch block to
-    // handle a potential write exception when given a wrong commentId.
   }
 
   /**
@@ -123,14 +126,13 @@ public class CommentDao extends AbstractMFlixDao {
   public boolean deleteComment(String commentId, String email) {
     //Ticket Delete Comments - Implement the method that enables the deletion of a user comment
     // TIP: make sure to match only users that own the given commentId
+    //Ticket Handling Errors - Implement a try catch block to handle a potential write exception when given a wrong commentId.
     Bson commentFilter = Filters.and(Filters.eq("_id", new ObjectId(commentId)), Filters.eq("email",email));
     Optional<Comment> comment = Optional.ofNullable(commentCollection.find(commentFilter).first());
     if (comment.isPresent()) {
       commentCollection.deleteOne(commentFilter);
       return true;
     }
-    // TODO> Ticket Handling Errors - Implement a try catch block to
-    // handle a potential write exception when given a wrong commentId.
     return false;
   }
 
