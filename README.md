@@ -1,10 +1,10 @@
 # [M220J: MongoDB for Java Developers](https://university.mongodb.com/courses/M220J/about) 
 
-MFlix software project is a training project provided by MongoDB University.
+MFlix software project is a training project provided by MongoDB University
 
 ## Project Structure
-- **Frontend**: the built-in React application.
-- **Backend**: Java Spring Boot project (managed by a Maven).
+- **Frontend**: the built-in React application
+- **Backend**: Java Spring Boot project (managed by Maven)
 
 ## How to run the application
 ```java
